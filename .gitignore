@@ -32,7 +32,7 @@ ExportedObj/
 sysinfo.txt
 
 # Builds
-*.unitypackage
+# *.unitypackage
 Local/
 .vscode/
 .idea/
