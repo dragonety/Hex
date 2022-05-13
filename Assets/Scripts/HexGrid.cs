@@ -20,10 +20,10 @@ public class HexGrid : MonoBehaviour {
 		gridCanvas = GetComponentInChildren<Canvas>();
 		hexMesh = GetComponentInChildren<HexMesh>();
 
-		cells = new HexCell[height * width];
+		cells = new HexCell[height * width * 4 + 2 * height + 2 * width + 1];
 
-		for (int z = 0, i = 0; z < height; z++) {
-			for (int x = 0; x < width; x++) {
+		for (int z = -height, i = 0; z <= height; z++) {
+			for (int x = -width; x <= width; x++) {
 				CreateCell(x, z, i++);
 			}
 		}
@@ -44,7 +44,8 @@ public class HexGrid : MonoBehaviour {
 
 	void CreateCell (int x, int z, int i) {
 		Vector3 position;
-		position.x = (x + z * 0.5f - z / 2) * (HexMetrics.innerRadius * 2f);
+		float oddOffset = Mathf.Abs((z % 2) * 0.5f);
+		position.x = (x + oddOffset) * (HexMetrics.innerRadius * 2f);
 		position.y = 0f;
 		position.z = z * (HexMetrics.outerRadius * 1.5f);
 
@@ -54,10 +55,10 @@ public class HexGrid : MonoBehaviour {
 		cell.coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
 		cell.color = defaultColor;
 
-		Text label = Instantiate<Text>(cellLabelPrefab);
-		label.rectTransform.SetParent(gridCanvas.transform, false);
-		label.rectTransform.anchoredPosition =
-			new Vector2(position.x, position.z);
-		label.text = cell.coordinates.ToStringOnSeparateLines();
+		//Text label = Instantiate<Text>(cellLabelPrefab);
+		//label.rectTransform.SetParent(gridCanvas.transform, false);
+		//label.rectTransform.anchoredPosition =
+		//	new Vector2(position.x, position.z);
+		//label.text = cell.coordinates.ToStringOnSeparateLines();
 	}
 }
