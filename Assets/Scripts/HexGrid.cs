@@ -3,8 +3,8 @@ using UnityEngine.UI;
 
 public class HexGrid : MonoBehaviour {
 
-	public int width = 6;
-	public int height = 6;
+	public int width = 5;
+	public int height = 5;
 
 	public Color defaultColor = Color.white;
 
@@ -44,8 +44,9 @@ public class HexGrid : MonoBehaviour {
 
 	void CreateCell (int x, int z, int i) {
 		Vector3 position;
-		float oddOffset = Mathf.Abs((z % 2) * 0.5f);
-		position.x = (x + oddOffset) * (HexMetrics.innerRadius * 2f);
+		position.x = (x + z * 0.5f - z / 2) * (HexMetrics.innerRadius * 2f);
+		//float oddOffset = Mathf.Abs((z % 2) * 0.5f);
+		//position.x = (x + oddOffset) * (HexMetrics.innerRadius * 2f);
 		position.y = 0f;
 		position.z = z * (HexMetrics.outerRadius * 1.5f);
 
@@ -54,6 +55,11 @@ public class HexGrid : MonoBehaviour {
 		cell.transform.localPosition = position;
 		cell.coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
 		cell.color = defaultColor;
+
+		if (cell.coordinates.X > -width)
+		{
+			//cell.SetNeighbor(HexDirection.W, cells[i - 1]);
+		}
 
 		if (x > 0) {
 			cell.SetNeighbor(HexDirection.W, cells[i - 1]);
