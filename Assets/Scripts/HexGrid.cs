@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class HexGrid : MonoBehaviour {
@@ -13,8 +14,8 @@ public class HexGrid : MonoBehaviour {
 
 	public Texture2D noiseSource;
 
-	HexGridChunk[] chunks;
-	HexCell[] cells;
+	private Dictionary<Vector2Int, HexGridChunk> dictChunk;
+	private Dictionary<HexCoordinates, HexCell> dictCell;
 
 	int cellCountX, cellCountZ;
 
@@ -29,22 +30,22 @@ public class HexGrid : MonoBehaviour {
 	}
 
 	void CreateChunks () {
-		chunks = new HexGridChunk[chunkCountX * chunkCountZ];
+		dictChunk = new Dictionary<Vector2Int, HexGridChunk>();
 
-		for (int z = 0, i = 0; z < chunkCountZ; z++) {
+		for (int z = 0; z < chunkCountZ; z++) {
 			for (int x = 0; x < chunkCountX; x++) {
-				HexGridChunk chunk = chunks[i++] = Instantiate(chunkPrefab);
-				chunk.transform.SetParent(transform);
+				HexGridChunk chunk = Instantiate(chunkPrefab, transform, true);
+				dictChunk.Add(new Vector2Int(x, z), chunk);
 			}
 		}
 	}
 
 	void CreateCells () {
-		cells = new HexCell[cellCountZ * cellCountX];
+		dictCell = new Dictionary<HexCoordinates, HexCell>();
 
-		for (int z = 0, i = 0; z < cellCountZ; z++) {
+		for (int z = 0; z < cellCountZ; z++) {
 			for (int x = 0; x < cellCountX; x++) {
-				CreateCell(x, z, i++);
+				CreateCell(x, z);
 			}
 		}
 	}
@@ -55,56 +56,46 @@ public class HexGrid : MonoBehaviour {
 
 	public HexCell GetCell (Vector3 position) {
 		position = transform.InverseTransformPoint(position);
-		HexCoordinates coordinates = HexCoordinates.FromPosition(position);
-		int index =
-			coordinates.X + coordinates.Z * cellCountX + coordinates.Z / 2;
-		return cells[index];
+		HexCoordinates coord = HexUtils.PositionToCoordinate(position);
+		return GetCell(coord);
 	}
 
 	public HexCell GetCell (HexCoordinates coordinates) {
-		int z = coordinates.Z;
-		if (z < 0 || z >= cellCountZ) {
+		if (dictCell.TryGetValue(coordinates, out HexCell value))
+		{
+			return value;
+		}
+		else
+		{
 			return null;
 		}
-		int x = coordinates.X + z / 2;
-		if (x < 0 || x >= cellCountX) {
-			return null;
-		}
-		return cells[x + z * cellCountX];
 	}
 
 	public void ShowUI (bool visible) {
-		for (int i = 0; i < chunks.Length; i++) {
-			chunks[i].ShowUI(visible);
+		foreach (var chunk in dictChunk.Values)
+		{
+			chunk.ShowUI(visible);
 		}
 	}
 
-	void CreateCell (int x, int z, int i) {
-		Vector3 position;
-		position.x = (x + z * 0.5f - z / 2) * (HexMetrics.innerRadius * 2f);
-		position.y = 0f;
-		position.z = z * (HexMetrics.outerRadius * 1.5f);
-
-		HexCell cell = cells[i] = Instantiate<HexCell>(cellPrefab);
+	void CreateCell (int x, int z) {
+		HexCell cell = Instantiate<HexCell>(cellPrefab);
+		Vector3 position = HexUtils.OffsetToPosition(x, z);
 		cell.transform.localPosition = position;
-		cell.coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
+		HexCoordinates coord = HexUtils.OffsetToCoordinate(x, z);
+		cell.coordinates = coord;
 		cell.Color = defaultColor;
+		
+		dictCell.Add(coord, cell);
 
-		if (x > 0) {
-			cell.SetNeighbor(HexDirection.W, cells[i - 1]);
-		}
-		if (z > 0) {
-			if ((z & 1) == 0) {
-				cell.SetNeighbor(HexDirection.SE, cells[i - cellCountX]);
-				if (x > 0) {
-					cell.SetNeighbor(HexDirection.SW, cells[i - cellCountX - 1]);
-				}
-			}
-			else {
-				cell.SetNeighbor(HexDirection.SW, cells[i - cellCountX]);
-				if (x < cellCountX - 1) {
-					cell.SetNeighbor(HexDirection.SE, cells[i - cellCountX + 1]);
-				}
+		for (int i = 0; i < 6; i++)
+		{
+			HexCoordinates tarCoord = coord.Get((HexDirection)i);
+			HexCell tarCell = GetCell(tarCoord);
+			if (tarCell)
+			{
+				Debug.LogErrorFormat("Cell:{0}, Tar:{1}, Ne:{2}", cell.coordinates, tarCell.coordinates, i);
+				cell.SetNeighbor((HexDirection)i, tarCell);
 			}
 		}
 
@@ -122,10 +113,17 @@ public class HexGrid : MonoBehaviour {
 	void AddCellToChunk (int x, int z, HexCell cell) {
 		int chunkX = x / HexMetrics.chunkSizeX;
 		int chunkZ = z / HexMetrics.chunkSizeZ;
-		HexGridChunk chunk = chunks[chunkX + chunkZ * chunkCountX];
+		if (dictChunk.TryGetValue(new Vector2Int(chunkX, chunkZ), out HexGridChunk chunk))
+		{
+			int localX = x - chunkX * HexMetrics.chunkSizeX;
+			int localZ = z - chunkZ * HexMetrics.chunkSizeZ;
+			chunk.AddCell(localX + localZ * HexMetrics.chunkSizeX, cell);
+		}
+		else
+		{
+			Debug.LogErrorFormat("X:{0}, Z:{1}", x, z);
+		}
 
-		int localX = x - chunkX * HexMetrics.chunkSizeX;
-		int localZ = z - chunkZ * HexMetrics.chunkSizeZ;
-		chunk.AddCell(localX + localZ * HexMetrics.chunkSizeX, cell);
+		
 	}
 }
