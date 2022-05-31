@@ -1,9 +1,10 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class HexGridChunk : MonoBehaviour {
 
-	HexCell[] cells;
+	List<HexCell> cells;
 
 	HexMesh hexMesh;
 	Canvas gridCanvas;
@@ -12,12 +13,13 @@ public class HexGridChunk : MonoBehaviour {
 		gridCanvas = GetComponentInChildren<Canvas>();
 		hexMesh = GetComponentInChildren<HexMesh>();
 
-		cells = new HexCell[HexMetrics.chunkSizeX * HexMetrics.chunkSizeZ];
+		cells = new List<HexCell>(HexMetrics.chunkSizeX * HexMetrics.chunkSizeZ);
 		ShowUI(false);
 	}
 
-	public void AddCell (int index, HexCell cell) {
-		cells[index] = cell;
+	public void AddCell (HexCell cell) {
+		//cells[index] = cell;
+		cells.Add(cell);
 		cell.chunk = this;
 		cell.transform.SetParent(transform, false);
 		cell.uiRect.SetParent(gridCanvas.transform, false);
@@ -32,7 +34,7 @@ public class HexGridChunk : MonoBehaviour {
 	}
 
 	void LateUpdate () {
-		hexMesh.Triangulate(cells);
+		hexMesh.Triangulate(cells.ToArray());
 		enabled = false;
 	}
 }
