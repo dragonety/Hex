@@ -44,9 +44,8 @@ Local/
 /Assets/TutorialInfo.meta
 /UserSettings/EditorUserSettings.asset
 
-/GameInstance/Android
+/GameInstance/
 /Assets/AddressableAssetsData/Android
 /Assets/AddressableAssetsData/Android.meta
-/GameInstance/Windows
 /Assets/AddressableAssetsData/Windows
 /Assets/AddressableAssetsData/Windows.meta
