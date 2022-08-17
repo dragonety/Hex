@@ -25,26 +25,21 @@ public class HexGrid : MonoBehaviour {
 	void Awake () {
 		HexMetrics.noiseSource = noiseSource;
 
-		cellCountX = chunkCountX * HexMetrics.chunkSizeX;
-		cellCountZ = chunkCountZ * HexMetrics.chunkSizeZ;
-
-		for (int i = -10; i < 10; i++)
-		{
-			var a = i / 3;
-			var b = Mathf.CeilToInt((float) i / 3);
-			Debug.LogErrorFormat("HERE:{0}:{1}:{2}", i, a, b);
-		}
-		
+		cellCountX = Mathf.FloorToInt((chunkCountX * 2 + 1) * HexMetrics.chunkSizeX * 0.5f);
+		cellCountZ = Mathf.FloorToInt((chunkCountZ * 2 + 1) * HexMetrics.chunkSizeZ * 0.5f);
 		CreateChunks();
 		CreateCells();
+		ShowUI(true);
 	}
 
 	void CreateChunks () {
 		dictChunk = new Dictionary<Vector2Int, HexGridChunk>();
 
-		for (int z = -chunkCountZ + 1; z <= chunkCountZ; z++) {
-			for (int x = -chunkCountX + 1; x <= chunkCountX; x++) {
+		Debug.LogErrorFormat("==========Chunk {0},{1}==========", chunkCountX, chunkCountZ);
+		for (int z = -chunkCountZ; z <= chunkCountZ; z++) {
+			for (int x = -chunkCountX; x <= chunkCountX; x++) {
 				HexGridChunk chunk = Instantiate(chunkPrefab, transform, true);
+				Debug.LogErrorFormat("Chunk:{0}:{1}", x, z);
 				dictChunk.Add(new Vector2Int(x, z), chunk);
 			}
 		}
@@ -53,8 +48,9 @@ public class HexGrid : MonoBehaviour {
 	void CreateCells () {
 		dictCell = new Dictionary<HexCoordinates, HexCell>();
 
-		for (int z = -cellCountZ + 1; z <= cellCountZ; z++) {
-			for (int x = -cellCountX + 1; x <= cellCountX; x++) {
+		Debug.LogErrorFormat("==========Cell {0},{1}==========", cellCountX, cellCountZ);
+		for (int z = -cellCountZ; z <= cellCountZ; z++) {
+			for (int x = -cellCountX; x <= cellCountX; x++) {
 				CreateCell(x, z);
 			}
 		}
@@ -119,9 +115,11 @@ public class HexGrid : MonoBehaviour {
 		AddCellToChunk(x, z, cell);
 	}
 
-	void AddCellToChunk (int x, int z, HexCell cell) {
-		int chunkX = Mathf.CeilToInt((float)x / HexMetrics.chunkSizeX);
-		int chunkZ = Mathf.CeilToInt((float)z / HexMetrics.chunkSizeZ);
+	void AddCellToChunk (int x, int z, HexCell cell)
+	{
+		int chunkX, chunkZ;
+		chunkX = HexUtils.FloorZero(x, HexMetrics.chunkSizeX, cellCountX % HexMetrics.chunkSizeX);
+		chunkZ = HexUtils.FloorZero(z, HexMetrics.chunkSizeZ, cellCountZ % HexMetrics.chunkSizeZ);
 		if (dictChunk.TryGetValue(new Vector2Int(chunkX, chunkZ), out HexGridChunk chunk))
 		{
 			int localX = x - chunkX * HexMetrics.chunkSizeX + x >= 0 ? 0 : HexMetrics.chunkSizeX;
@@ -133,7 +131,7 @@ public class HexGrid : MonoBehaviour {
 		}
 		else
 		{
-			Debug.LogErrorFormat("X:{0}, Z:{1}", x, z);
+			Debug.LogErrorFormat("x:{0},z:{1},cx:{2},cz:{3}",x,z,chunkX,chunkZ);
 		}
 
 		
